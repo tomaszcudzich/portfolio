@@ -5,11 +5,9 @@ do systemu rozliczeniowego. **Używane produkcyjnie codziennie. Klient odzyskał
 ponad godzinę pracy tygodniowo** — to jedyna twarda liczba w moim portfolio
 i pochodzi od niego, nie ode mnie.
 
-```
-otwórz index.html w przeglądarce
-```
-
-Nie ma instalacji, nie ma builda, nie ma zależności npm. Jeden plik.
+**Otwórz od razu: [konwerter-kart-flotowych.vercel.app](https://konwerter-kart-flotowych.vercel.app)**
+— albo pobierz `index.html` i otwórz go z dysku. Działa tak samo, bo cały mieści
+się w jednym pliku: nie ma instalacji, nie ma builda, nie ma zależności npm.
 
 ![Wczytany plik z wykrytym duplikatem](./zrzuty/01-wczytany-plik.png)
 

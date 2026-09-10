@@ -18,11 +18,11 @@ zawodników, skanach paszportów psów. Repozytoria zostają prywatne i to jest
 To repozytorium rozwiązuje problem inaczej: pokazuję **kod, który wolno pokazać**,
 a resztę opisuję.
 
-| | Co to jest | Kod | Uruchomisz? |
+| | Co to jest | Kod | Otwórz w przeglądarce |
 |---|---|---|---|
-| [Wyszukiwarka regulaminu](./wyszukiwarka-regulaminu) | Moduł wyjęty ze SKYLOSA, w produkcji jawny | ✅ produkcyjny, z testami | ✅ `npm run dev` |
-| [Konwerter kart flotowych](./konwerter-kart-flotowych) | Całe narzędzie, zanonimizowane | ✅ produkcyjny | ✅ otwórz `index.html` |
-| [SKYLOS Twisted Trails](./skylos-twisted-trails) | Największy system, 15 paneli rolowych | ❌ prywatne | 24 zrzuty ekranu |
+| [Wyszukiwarka regulaminu](./wyszukiwarka-regulaminu) | Moduł wyjęty ze SKYLOSA, w produkcji jawny | ✅ produkcyjny, 21 testów | **[wyszukiwarka-regulaminu.vercel.app](https://wyszukiwarka-regulaminu.vercel.app)** |
+| [Konwerter kart flotowych](./konwerter-kart-flotowych) | Całe narzędzie, zanonimizowane | ✅ produkcyjny | **[konwerter-kart-flotowych.vercel.app](https://konwerter-kart-flotowych.vercel.app)** |
+| [SKYLOS Twisted Trails](./skylos-twisted-trails) | Największy system, 13 ról użytkowników | ❌ prywatne | 24 zrzuty ekranu |
 | [Magazyn Opon](./magazyn-opon) | Ewidencja opon dla floty 120 pojazdów | ❌ prywatne | 4 zrzuty ekranu |
 | [System danych floty (PWA)](./system-danych-floty) | Dane techniczne offline w telefonie | ❌ prywatne | opis |
 

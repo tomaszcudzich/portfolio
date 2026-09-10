@@ -9,6 +9,9 @@ To jest **kod produkcyjny, nie przykład napisany na potrzeby portfolio**. Da si
 go pokazać w całości, bo ta część systemu jest jawna także u klienta: regulaminu
 potrzebuje najbardziej ktoś, kto dopiero się zapisuje i konta jeszcze nie ma.
 
+**Otwórz od razu: [wyszukiwarka-regulaminu.vercel.app](https://wyszukiwarka-regulaminu.vercel.app)**
+— albo uruchom u siebie:
+
 ```bash
 npm install
 npm run dev     # → http://localhost:3000
