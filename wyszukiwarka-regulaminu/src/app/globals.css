@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+/* ── Tokeny marki SKYLOS (PROJECT_BRIEF.md §7) ──────────────────────────────
+   Statyczne hexy → Tailwind generuje utility: bg-skylos-gold, text-skylos-cream,
+   border-skylos-gold-dim, bg-success, text-error, ... */
+@theme {
+  /* Marka */
+  /* Te dwie nazwy zostają, bo używa ich cała aplikacja — ale WSKAZUJĄ TERAZ
+     NA WARSTWY z sekcji niżej. Dzięki temu poprawiony kontrast wszedł wszędzie
+     jednym ruchem, zamiast być gonionym po stu miejscach; nowy kod używa nazw
+     `warstwa-*`, bo one mówią o roli, a nie o kolorze. */
+  --color-skylos-bg:       #0d0703; /* = warstwa-0, podłoże */
+  --color-skylos-panel:    #26190a; /* = warstwa-1, karta */
+  --color-skylos-gold:     #b8862a; /* akcent główny — złoto */
+  --color-skylos-gold-hi:  #d4c098; /* złoto hover/jaśniejsze */
+  --color-skylos-cream:    #f0e4cc; /* tekst główny na ciemnym */
+  --color-skylos-gold-dim: #7a5418; /* obramowania, przygaszone złoto */
+
+  /* Stany */
+  --color-success: #3f7a3f;
+  --color-error:   #b23b3b;
+  --color-warning: #c9962b;
+
+  /* ── WARSTWY TŁA W PANELACH ───────────────────────────────────────────────
+     Zawodnicy, 09.09.2026: „elementy nie są od siebie wizualnie oddzielone
+     kolorami… nie pozwala skanować strony, tylko nakazuje ją czytać".
+
+     Przyczyna była mierzalna: tło strony (#1a1008) i tło karty (#22150b)
+     różniły się o cztery procent jasności. Dla oka to jeden kolor, więc karta
+     przestawała być kartą, a ekran robił się jednolitą płachtą tekstu.
+
+     Wartości dobrane POMIAREM, nie na oko. Miarą jest różnica jasności
+     percepcyjnej (L*), bo zwykły współczynnik kontrastu przy prawie czarnych
+     barwach spłaszcza się i myli. Krok zauważalny to 6–10 punktów L*:
+
+       obecne  #1a1008 → #22150b   2,6 pkt  ← stąd „wszystko wygląda tak samo"
+       nowe    #0d0703 → #26190a   7,8 pkt
+               #26190a → #3d2913   8,4 pkt
+
+     Tekst kremowy na karcie zachowuje kontrast 13,6:1 — grubo ponad wymagane
+     4,5:1, więc czytelność w słońcu nie ucierpiała. */
+  --color-warstwa-0: #0d0703; /* podłoże panelu — najciemniejsze */
+  --color-warstwa-1: #26190a; /* karta */
+  --color-warstwa-2: #3d2913; /* pasek nagłówka, wyróżnienie w karcie */
+  --color-kreska:    #5a3d16; /* cienka linia rozdzielająca */
+}
+
+/* Fonty z next/font wstrzykiwane jako CSS vars na <html> (layout.tsx).
+   `inline` → Tailwind emituje font-family bezpośrednio z var(--font-*). */
+@theme inline {
+  --font-display: var(--font-cinzel); /* szeryfowy display — nagłówki/wordmark */
+  --font-sans:    var(--font-inter);  /* czytelny sans — treść i pola */
+}
+
+/* Chrome aplikacji = ciemny klimat SKYLOS (§7). */
+body {
+  background-color: var(--color-skylos-bg);
+  color: var(--color-skylos-cream);
+  font-family: var(--font-sans);
+}
+
+/* ── Reguła czytelności pól (§7) ────────────────────────────────────────────
+   Deck sponsorski jest ciemny, ale formularz wypełnia się na telefonie w terenie.
+   Same inputy ZAWSZE: jasne tło, ciemny tekst, widoczny focus klawiatury, kontrast AA.
+   Klasy pomocniczej użyją formularze w kroku 3. */
+@layer components {
+  .skylos-field {
+    @apply min-h-[44px] w-full rounded-md border border-skylos-gold-dim/50 bg-skylos-cream px-3 py-2.5
+           text-base text-skylos-bg placeholder:text-[#7a6a52]
+           shadow-sm outline-none transition-colors
+           focus-visible:border-skylos-gold focus-visible:ring-2 focus-visible:ring-skylos-gold;
+  }
+}
+
+/* ── Co znika, gdy aplikacja jest zainstalowana ─────────────────────────────
+   Zawodnik, 01.09.2026: „bez sensu jest informacja o zainstalowanej aplikacji,
+   więc jeżeli jest już na urządzeniu, to ukrywamy sekcję".
+
+   PRZEZ CSS, NIE PRZEZ JAVASCRIPT — świadomie. Detekcja w JavaScripcie działa
+   dopiero po hydracji, więc sekcja zdążyłaby mignąć i zniknąć, przeskakując
+   przy tym całą stroną. Zapytanie o medium rozstrzyga się przy pierwszym
+   malowaniu: kto ma apkę na ekranie, nigdy tej sekcji nie zobaczy.
+
+   `display-mode: standalone` znaczy „ta karta działa jako zainstalowana
+   aplikacja", a nie „ikona jest na ekranie". Ktoś, kto wejdzie z linku
+   z Facebooka, zobaczy instrukcję mimo że apkę ma — i tak ma być: w przeglądarce
+   jest wtedy naprawdę w przeglądarce. Uczciwiej tego nie da się wykryć, bo
+   `getInstalledRelatedApps()` nie istnieje na iOS. */
+@media (display-mode: standalone) {
+  [data-tylko-w-przegladarce] {
+    display: none;
+  }
+}

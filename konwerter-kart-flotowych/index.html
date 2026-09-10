@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Konwerter kart flotowych</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f0f0f0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.card{background:#fff;border-radius:14px;padding:2rem;max-width:660px;width:100%;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+h1{font-size:18px;font-weight:600;margin-bottom:4px}
+.sub{font-size:13px;color:#888;margin-bottom:1.5rem}
+.tabs{display:flex;gap:8px;margin-bottom:1.25rem}
+.tab{flex:1;padding:9px 12px;border:1.5px solid #ddd;border-radius:8px;background:#fff;font-size:13px;font-weight:500;cursor:pointer;text-align:center;color:#555;transition:all .15s}
+.tab.active{border-color:#1a1a1a;background:#1a1a1a;color:#fff}
+.desc{font-size:12px;color:#999;background:#f7f7f7;border-radius:6px;padding:8px 12px;margin-bottom:1.25rem;line-height:1.5}
+.drop{border:1.5px dashed #ccc;border-radius:8px;padding:2rem 1.5rem;text-align:center;cursor:pointer;transition:background .15s}
+.drop:hover,.drop.over{background:#f7f7f7}
+.drop.loaded{border-color:#86efac;background:#f0fdf0}
+.drop svg{display:block;margin:0 auto 8px;color:#bbb}
+.drop.loaded svg{color:#16a34a}
+.drop p{font-size:14px;color:#666;margin-bottom:2px}
+.drop.loaded p{color:#15803d;font-weight:500}
+.drop small{font-size:12px;color:#aaa}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem}
+.slabel{font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+input[type=file]{display:none}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:1.25rem}
+.stat{background:#f7f7f7;border-radius:8px;padding:.75rem;text-align:center}
+.stat.gbg{background:#f0fdf0}
+.slabel2{font-size:12px;color:#888;margin-bottom:2px}
+.sval{font-size:22px;font-weight:600}
+.sval.g{color:#16a34a}
+.ibox{background:#f0fdf0;border:1px solid #86efac;border-radius:8px;padding:12px 14px;margin-top:1rem;font-size:13px}
+.ititle{font-weight:600;color:#15803d;margin-bottom:8px}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{text-align:left;color:#999;font-weight:500;padding:4px 6px;border-bottom:1px solid #86efac}
+.dt td{padding:5px 6px;border-bottom:1px solid #bbf7d0;color:#444;vertical-align:top}
+.dt tr:last-child td{border-bottom:none}
+.picker{background:#f7f7f7;border-radius:8px;padding:1rem;margin-top:1rem}
+.picker-title{font-size:13px;font-weight:500;margin-bottom:10px;color:#333}
+.checks{display:flex;flex-direction:column;gap:6px}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.chk input{width:15px;height:15px;cursor:pointer}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;margin-top:1.25rem;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer}
+.btn:hover:not(:disabled){background:#333}
+.btn:disabled{background:#999;cursor:default}
+.err{background:#fff0f0;border:1px solid #f0b0b0;border-radius:8px;padding:12px 14px;margin-top:1rem;font-size:13px;color:#c00}
+.hidden{display:none}
+.reg-list{margin-top:.75rem;border:1px solid #eee;border-radius:8px;overflow:hidden}
+.reg-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid #f0f0f0}
+.reg-item:last-child{border-bottom:none}
+.reg-nr{flex:1;font-size:13px;font-weight:500;color:#222}
+.reg-edit-input{flex:1;border:1px solid #bbb;border-radius:5px;padding:4px 8px;font-size:13px}
+.reg-btn{padding:5px 10px;border:none;border-radius:5px;font-size:12px;cursor:pointer;font-weight:500}
+.reg-btn.del{background:#fee2e2;color:#dc2626}
+.reg-btn.edit{background:#f0f9ff;color:#0369a1}
+.reg-btn.save{background:#d1fae5;color:#065f46}
+.reg-btn.cancel{background:#f3f4f6;color:#555}
+.reg-add{display:flex;gap:8px;margin-top:.75rem}
+.reg-add input{flex:1;border:1.5px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px}
+.reg-add input:focus{outline:none;border-color:#1a1a1a}
+.reg-add-btn{padding:8px 16px;background:#1a1a1a;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer}
+.reg-add-btn:hover{background:#333}
+.reg-status{font-size:12px;margin-top:.5rem;padding:6px 10px;border-radius:6px}
+.reg-status.info{background:#f7f7f7;color:#888}
+.reg-status.ok{background:#f0fdf4;color:#16a34a}
+.reg-status.err{background:#fff0f0;color:#c00}
+.reg-empty{font-size:13px;color:#aaa;padding:12px;text-align:center}
+.reg-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:8px 12px;font-size:12px;color:#9a3412;margin-top:.5rem}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Konwerter kart flotowych</h1>
+  <p class="sub">Wczytaj plik CSV lub Excel — pobierz gotowy format do systemu.</p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('s')">system-A</div>
+    <div class="tab"        onclick="showTab('m')">system-B</div>
+    <div class="tab"        onclick="showTab('z')">Zbiorczy</div>
+    <div class="tab"        onclick="showTab('r')">Rejestracje</div>
+  </div>
+
+  <!-- SYSTEM A -->
+  <div id="pane-s">
+    <div class="desc">Wczytaj wyciąg z karty flotowej Orlenu.<br>Wynik: plik gotowy do wczytania do systemu <strong>system-A</strong>.</div>
+    <div class="drop" id="drop-s" onclick="document.getElementById('fi-s').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="onDrop(event,'s')">
+      <p id="dlabel-s">Przeciągnij plik lub kliknij tutaj</p><small>CSV lub Excel</small>
+      <input type="file" id="fi-s" onchange="onFile(this.files[0],'s')">
+    </div>
+    <div id="err-s" class="err hidden"></div>
+    <div id="stats-s" class="stats hidden"></div>
+    <div id="dupes-s" class="hidden"></div>
+    <div id="picker-s" class="picker hidden"><div class="picker-title">Wybierz dni do wygenerowania:</div><div id="checks-s" class="checks"></div></div>
+    <button id="btn-s" class="btn hidden" onclick="generate('s')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg><span id="blabel-s">Generuj i pobierz</span></button>
+  </div>
+
+  <!-- SYSTEM B -->
+  <div id="pane-m" class="hidden">
+    <div class="desc">Wczytaj wyciąg z karty flotowej Orlenu.<br>Wynik: plik gotowy do wczytania do systemu <strong>system-B</strong>.</div>
+    <div class="drop" id="drop-m" onclick="document.getElementById('fi-m').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="onDrop(event,'m')">
+      <p id="dlabel-m">Przeciągnij plik lub kliknij tutaj</p><small>CSV lub Excel</small>
+      <input type="file" id="fi-m" onchange="onFile(this.files[0],'m')">
+    </div>
+    <div id="err-m" class="err hidden"></div>
+    <div id="stats-m" class="stats hidden"></div>
+    <div id="dupes-m" class="hidden"></div>
+    <div id="picker-m" class="picker hidden"><div class="picker-title">Wybierz dni do wygenerowania:</div><div id="checks-m" class="checks"></div></div>
+    <button id="btn-m" class="btn hidden" onclick="generate('m')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg><span id="blabel-m">Generuj i pobierz</span></button>
+  </div>
+
+  <!-- ZBIORCZY -->
+  <div id="pane-z" class="hidden">
+    <div class="desc">Wczytaj oba pliki — zostanie wygenerowany plik zbiorczy z trzema sekcjami.</div>
+    <div class="pair">
+      <div>
+        <div class="slabel">System A (firma)</div>
+        <div class="drop" id="drop-zs" onclick="document.getElementById('fi-zs').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="onDrop(event,'zs')">
+          <p id="dlabel-zs">Kliknij lub przeciągnij</p><small>CSV lub Excel</small>
+          <input type="file" id="fi-zs" onchange="onFile(this.files[0],'zs')">
+        </div>
+      </div>
+      <div>
+        <div class="slabel">System B (oddział)</div>
+        <div class="drop" id="drop-zm" onclick="document.getElementById('fi-zm').click()" ondragover="event.preventDefault();this.classList.add('over')" ondragleave="this.classList.remove('over')" ondrop="onDrop(event,'zm')">
+          <p id="dlabel-zm">Kliknij lub przeciągnij</p><small>CSV lub Excel</small>
+          <input type="file" id="fi-zm" onchange="onFile(this.files[0],'zm')">
+        </div>
+      </div>
+    </div>
+    <div id="err-z" class="err hidden"></div>
+    <div id="picker-z" class="picker hidden"><div class="picker-title">Wybierz dni do wygenerowania:</div><div id="checks-z" class="checks"></div></div>
+    <button id="btn-z" class="btn hidden" onclick="generate('z')"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg><span id="blabel-z">Wczytaj oba pliki</span></button>
+  </div>
+
+  <!-- REJESTRACJE -->
+  <div id="pane-r" class="hidden">
+    <div class="desc">Lista aktywnych numerów rejestracyjnych. Numery spoza listy są podświetlane na pomarańczowo w generowanych plikach XLSX.</div>
+    <div id="reg-status-bar" class="reg-status info">Ładowanie listy rejestracji…</div>
+    <div id="reg-warn" class="reg-warn hidden">Lista rejestracji niedostępna. Generowanie plików działa normalnie, bez podświetlania.</div>
+    <div class="reg-add">
+      <input type="text" id="reg-new-nr" placeholder="Nowy numer rejestracyjny (np. WA12345)" onkeydown="if(event.key==='Enter')regAdd()" />
+      <button class="reg-add-btn" onclick="regAdd()">Dodaj</button>
+    </div>
+    <div class="reg-list" id="reg-list"><div class="reg-empty">Ładowanie…</div></div>
+  </div>
+</div>
+
+<script>
+// ── PRZECHOWYWANIE LISTY REJESTRACJI ─────────────────────────────────────────
+// WERSJA DEMONSTRACYJNA. U klienta ta lista leży w Supabase i jest wspólna dla
+// wszystkich osób w firmie. Tutaj trzymamy ją w localStorage przeglądarki, żeby
+// demo działało bez konta, bez konfiguracji i bez żadnych kluczy w repozytorium.
+// Wymieniana jest wyłącznie ta warstwa — reszta pliku jest kodem produkcyjnym.
+var KLUCZ = 'demo-rejestracje';
+var activeRegs = null; // Set<string>, null = lista niedostępna
+
+var magazyn = {
+  czytaj: function () {
+    try { return JSON.parse(localStorage.getItem(KLUCZ)) || null; }
+    catch (e) { return null; }
+  },
+  zapisz: function (lista) {
+    localStorage.setItem(KLUCZ, JSON.stringify(lista));
+  }
+};
+
+// Pierwsze uruchomienie: kilka przykładowych numerów, żeby było co pokazać.
+var REJESTRACJE_STARTOWE = ['KR 1A234', 'KR 5B678', 'NS 9C012', 'NS 3D456', 'WA 7E890'];
+
+function supaInit() { /* w demo nie ma z czym się łączyć */ }
+
+async function loadRegs() {
+  var lista = magazyn.czytaj();
+  if (lista === null) { lista = REJESTRACJE_STARTOWE.slice(); magazyn.zapisz(lista); }
+  activeRegs = new Set(lista.map(function (n) { return String(n || '').trim().toUpperCase(); }));
+  return lista.map(function (n) { return { numer: n }; });
+}
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+var state = { s: null, m: null, zs: null, zm: null };
+var HEADER = ['Data','Godzina','Dystrybutor','Nr._rejestracyjny','Przebieg','Operator','Ilosc'];
+
+// ── UI HELPERS ───────────────────────────────────────────────────────────────
+function showTab(t) {
+  ['s','m','z','r'].forEach(function(id) {
+    document.getElementById('pane-'+id).classList.toggle('hidden', id !== t);
+  });
+  document.querySelectorAll('.tab').forEach(function(el, i) {
+    el.classList.toggle('active', ['s','m','z','r'][i] === t);
+  });
+}
+
+function el(id) { return document.getElementById(id); }
+function hide(id) { el(id).classList.add('hidden'); }
+function show(id) { el(id).classList.remove('hidden'); }
+function setErr(slot, msg) { var e=el('err-'+slot); e.textContent=msg; show('err-'+slot); }
+function clearErr(slot) { hide('err-'+slot); }
+
+// ── FILE READING ─────────────────────────────────────────────────────────────
+function onDrop(event, slot) {
+  event.preventDefault();
+  el('drop-'+slot).classList.remove('over');
+  if (event.dataTransfer.files[0]) onFile(event.dataTransfer.files[0], slot);
+}
+
+function onFile(file, slot) {
+  if (!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (ext === 'csv') {
+    var r = new FileReader();
+    r.onload = function(e) { loadRows(csvToRows(e.target.result), file.name, slot); };
+    r.readAsText(file, 'UTF-8');
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    var r = new FileReader();
+    r.onload = function(e) {
+      var wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', cellDates:true});
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      loadRows(XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:false}), file.name, slot);
+    };
+    r.readAsArrayBuffer(file);
+  } else {
+    setErr(slot, 'Nieobsługiwany format. Użyj CSV lub Excel.');
+  }
+}
+
+function csvToRows(text) {
+  var lines = text.split(/\r?\n/);
+  var first = lines.find(function(l){ return l.trim(); }) || '';
+  var sep = first.split(';').length > first.split(',').length ? ';' : ',';
+  return lines.map(function(l){ return splitCSV(l, sep); });
+}
+
+function splitCSV(line, sep) {
+  var cols=[], inQ=false, cur='';
+  for (var i=0; i<line.length; i++) {
+    var c=line[i];
+    if (c==='"') inQ=!inQ;
+    else if (c===sep && !inQ) { cols.push(cur.trim()); cur=''; }
+    else cur+=c;
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
+// ── PARSING ──────────────────────────────────────────────────────────────────
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function toDate(v) {
+  if (!v) return '';
+  if (typeof v === 'object' && v instanceof Date)
+    return v.getFullYear()+'-'+pad(v.getMonth()+1)+'-'+pad(v.getDate());
+  var s = String(v).trim(), m;
+  if ((m=s.match(/^(\d{4})-(\d{2})-(\d{2})/))) return m[1]+'-'+m[2]+'-'+m[3];
+  if ((m=s.match(/^(\d{4})\/(\d{2})\/(\d{2})/))) return m[1]+'-'+m[2]+'-'+m[3];
+  if ((m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/))) return m[3]+'-'+pad(m[2])+'-'+pad(m[1]);
+  if ((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2})$/))) return '20'+m[3]+'-'+pad(m[1])+'-'+pad(m[2]);
+  if ((m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/))) return m[3]+'-'+pad(m[1])+'-'+pad(m[2]);
+  return s;
+}
+
+function toNum(s){ return parseFloat(String(s).replace(/"/g,'').trim().replace(',','.'))||0; }
+
+function parseDispenses(rows) {
+  var hi = rows.findIndex(function(r){ var j=r.join('').toUpperCase(); return j.includes('DATA')&&j.includes('GODZINA'); });
+  if (hi<0) return null;
+  var hdr = rows[hi], ci = {};
+  hdr.forEach(function(v,i){ if(v) ci[String(v).trim().toUpperCase()] = i; });
+  function col(names, fb) { for(var i=0;i<names.length;i++){ var k=names[i].toUpperCase(); if(ci[k]!==undefined)return ci[k]; } return fb; }
+  var cD=col(['DATA'],0), cG=col(['GODZINA'],1), cDy=col(['DYSTRYBUTOR','URZĄDZENIE','URZADZENIE'],2);
+  var cN=col(['NR._REJESTRACYJNY','NUMER REJ.','NR REJ'],3);
+  var cP=col(['PRZEBIEG','STAN LICZNIKA'],4), cO=col(['OPERATOR','KIEROWCA'],5), cI=col(['ILOSC','ILOŚĆ (L)'],6);
+  var data=[];
+  for (var i=hi+1; i<rows.length; i++) {
+    var r=rows[i];
+    if (!r||r.every(function(c){return !String(c).trim();})) continue;
+    var d=toDate(r[cD]), nr=String(r[cN]||'').trim();
+    if (!d||!nr) continue;
+    data.push({ date:d, time:String(r[cG]||'').trim(), device:String(r[cDy]||'').trim(),
+      nrRej:nr, przebieg:String(r[cP]||'').trim(), kierowca:String(r[cO]||'').trim(),
+      ilosc:Math.round(toNum(String(r[cI]||''))) });
+  }
+  return data.length ? data : null;
+}
+
+function parseTransAkt(rows) {
+  var hi = rows.findIndex(function(r){ var j=r.join('').toLowerCase(); return j.includes('numerrej')||j.includes('datatransakcji'); });
+  if (hi<0) return null;
+  var hdr=rows[hi], idx={};
+  hdr.forEach(function(h,i){ idx[h.trim()]=i; });
+  function get(r,k){ return idx[k]!==undefined?String(r[idx[k]]||'').trim():''; }
+  var data=[];
+  for (var i=hi+1; i<rows.length; i++) {
+    var r=rows[i];
+    if (!r||r.every(function(c){return !String(c).trim();})) continue;
+    var dt=get(r,'DataTransakcji');
+    if (!dt) continue;
+    var dm=dt.match(/^(\d{4})-(\d{2})-(\d{2})\s+(\d{2}:\d{2})/);
+    if (!dm) continue;
+    var nr=get(r,'NumerRej'), prod=get(r,'NazwaProduktu').trim();
+    data.push({ date:dm[1]+'-'+dm[2]+'-'+dm[3], time:dm[4], device:'6',
+      nrRej:nr+prod, nrRejClean:nr, produkt:prod,
+      przebieg:get(r,'LicznikKM'), kierowca:get(r,'Miejscowosc'),
+      ilosc:Math.round(toNum(get(r,'PobranaIlosc'))) });
+  }
+  return data.length ? data : null;
+}
+
+// ── DATA HELPERS ─────────────────────────────────────────────────────────────
+function sorted(data) {
+  return data.slice().sort(function(a,b){
+    if (a.date!==b.date) return a.date<b.date?-1:1;
+    return a.time<b.time?-1:a.time>b.time?1:0;
+  });
+}
+
+function uniqueDates(data) {
+  var seen={}, out=[];
+  data.forEach(function(r){ if(!seen[r.date]){seen[r.date]=true;out.push(r.date);} });
+  return out.sort();
+}
+
+function dupeSet(data) {
+  var seen={}, set={};
+  data.forEach(function(r,i){ var k=r.nrRej+'|'+r.date; if(!seen[k]) seen[k]=[]; seen[k].push(i); });
+  Object.keys(seen).forEach(function(k){ if(seen[k].length>1) seen[k].forEach(function(i){set[i]=true;}); });
+  return set;
+}
+
+function dupeGroups(data) {
+  var seen={};
+  data.forEach(function(r,i){ var k=r.nrRej+'|'+r.date; if(!seen[k]) seen[k]=[]; seen[k].push(i); });
+  var out=[];
+  Object.keys(seen).forEach(function(k){
+    if(seen[k].length<2) return;
+    var idxs=seen[k].slice().sort(function(a,b){return data[a].time<data[b].time?-1:1;});
+    out.push({ nrRej:data[idxs[0]].nrRej, date:data[idxs[0]].date,
+      items:idxs.map(function(i){return data[i].time+' — '+data[i].ilosc+'L — przebieg: '+data[i].przebieg;}) });
+  });
+  return out;
+}
+
+function redSet(data) {
+  // group by nrRej, sort by date+time, flag where przebieg decreases
+  var groups={};
+  data.forEach(function(r,i){ if(!groups[r.nrRej])groups[r.nrRej]=[]; groups[r.nrRej].push({i:i,r:r}); });
+  var set={};
+  Object.keys(groups).forEach(function(k){
+    var rows=groups[k].slice().sort(function(a,b){
+      if(a.r.date!==b.r.date)return a.r.date<b.r.date?-1:1;
+      return a.r.time<b.r.time?-1:1;
+    });
+    for(var i=1;i<rows.length;i++){
+      var prev=parseInt(rows[i-1].r.przebieg)||0;
+      var curr=parseInt(rows[i].r.przebieg)||0;
+      if(curr>0&&prev>0&&curr<prev) set[rows[i].i]=true;
+    }
+  });
+  return set;
+}
+
+function isGaz(p){ return /GAZ|LPG/i.test(p); }
+
+function dedupFuel(data) {
+  // per (nrRejClean, date, przebieg): if both gaz and non-gaz, keep only gaz
+  var groups={};
+  data.forEach(function(r,i){
+    var k=(r.nrRejClean||r.nrRej)+'|'+r.date+'|'+r.przebieg;
+    if(!groups[k]) groups[k]=[];
+    groups[k].push(i);
+  });
+  var skip={};
+  Object.keys(groups).forEach(function(k){
+    var idxs=groups[k];
+    if(idxs.length<2) return;
+    var hasGaz=idxs.some(function(i){return isGaz(data[i].produkt||'');});
+    if(hasGaz) idxs.forEach(function(i){ if(!isGaz(data[i].produkt||'')) skip[i]=true; });
+  });
+  return data.filter(function(_,i){ return !skip[i]; });
+}
+
+// ── XLSX BUILDER ─────────────────────────────────────────────────────────────
+// styles: s=1 bold+gray header, s=2 green, s=3 red (Przebieg cell only)
+var STYLES = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+  +'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+  +'<fonts count="2">'
+    +'<font><sz val="11"/><name val="Calibri"/></font>'
+    +'<font><sz val="11"/><b/><name val="Calibri"/></font>'
+  +'</fonts>'
+  +'<fills count="6">'
+    +'<fill><patternFill patternType="none"/></fill>'
+    +'<fill><patternFill patternType="gray125"/></fill>'
+    +'<fill><patternFill patternType="solid"><fgColor rgb="FFD9D9D9"/></patternFill></fill>'
+    +'<fill><patternFill patternType="solid"><fgColor rgb="FF92D050"/></patternFill></fill>'
+    +'<fill><patternFill patternType="solid"><fgColor rgb="FFFF4444"/></patternFill></fill>'
+    +'<fill><patternFill patternType="solid"><fgColor rgb="FFFFB347"/></patternFill></fill>'
+  +'</fills>'
+  +'<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+  +'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
+  +'<cellXfs count="5">'
+    +'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'           // 0 normal
+    +'<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>' // 1 bold+gray
+    +'<xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/>'               // 2 green
+    +'<xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/>'               // 3 red
+    +'<xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/>'               // 4 orange
+  +'</cellXfs>'
+  +'</styleSheet>';
+
+var COLW = [{wch:12},{wch:8},{wch:10},{wch:24},{wch:10},{wch:20},{wch:8}];
+var COL_LETTERS = ['A','B','C','D','E','F','G'];
+
+function bin2arr(s){ var a=new Uint8Array(s.length); for(var i=0;i<s.length;i++) a[i]=s.charCodeAt(i)&0xFF; return a; }
+
+// rowStyles: array of per-row style info
+// each entry: null | {type:'row',s:N} | {type:'cell',col:'E',s:N}
+function buildXlsx(rowData, rowStyles, sheetName, cb) {
+  var ws = XLSX.utils.aoa_to_sheet(rowData);
+  ws['!cols'] = COLW;
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName||'Dane');
+  var bin = XLSX.write(wb, {bookType:'xlsx', type:'binary'});
+
+  JSZip.loadAsync(bin2arr(bin)).then(function(zip){
+    zip.file('xl/styles.xml', STYLES);
+    return zip.file('xl/worksheets/sheet1.xml').async('string').then(function(xml){
+      rowStyles.forEach(function(st, i){
+        if (!st) return;
+        var rn=i+1;
+        var rowRe=new RegExp('(<row r="'+rn+'"[^>]*>)([\\s\\S]*?)(<\/row>)');
+        xml=xml.replace(rowRe,function(_,o,cells,c){
+          var rowS=st.type==='row'?st.s:st.type==='both'?st.rowS:null;
+          if(rowS) cells=cells.replace(new RegExp('<c r="([A-Z]+)'+rn+'"([^>]*?)(\\s*\\/?>)','g'),
+            function(_2,col,attrs,end){return '<c r="'+col+rn+'"'+attrs.replace(/\s*s="\d+"/,'')+' s="'+rowS+'"'+end;});
+          if(st.type==='cell'||st.type==='both') {
+            var redCol=st.col||'E', redS=st.s||3;
+            cells=cells.replace(new RegExp('<c r="('+redCol+')'+rn+'"([^>]*?)(\\s*\\/?>)'),
+              function(_2,col,attrs,end){return '<c r="'+col+rn+'"'+attrs.replace(/\s*s="\d+"/,'')+' s="'+redS+'"'+end;});
+          }
+          if(st.orangeD) {
+            cells=cells.replace(new RegExp('<c r="(D)'+rn+'"([^>]*?)(\\s*\\/?>)'),
+              function(_2,col,attrs,end){return '<c r="D'+rn+'"'+attrs.replace(/\s*s="\d+"/,'')+' s="4"'+end;});
+          }
+          return o+cells+c;
+        });
+      });
+      zip.file('xl/worksheets/sheet1.xml', xml);
+      return zip.generateAsync({type:'uint8array', compression:'DEFLATE'});
+    });
+  }).then(function(out){
+    cb(null, new Blob([out], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  }).catch(cb);
+}
+
+function dlBlob(blob, name){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.href=url; a.download=name; a.click();
+}
+
+// ── BUILD SHEET ROWS ─────────────────────────────────────────────────────────
+// returns {rows, styles} for a single data array
+// ds = dupeSet, rs = redSet (both keyed by index in data array)
+function buildSheet(data, ds, rs, orangeIdxSet) {
+  var rows=[], styles=[];
+  function push(row, style){ rows.push(row); styles.push(style||null); }
+
+  push(HEADER.slice(), {type:'row',s:1}); // column header bold+gray
+  var srt = sorted(data);
+  var prevDate = null;
+  srt.forEach(function(r, si){
+    var oi = data.indexOf(r);
+    if (prevDate && r.date !== prevDate) push(['','','','','','',''], null);
+    var green = ds&&ds[oi];
+    var red   = rs&&rs[oi];
+    var orange = orangeIdxSet && orangeIdxSet[oi];
+    var st = red
+      ? {type:'both', rowS: green?2:null, col:'E', s:3}
+      : green ? {type:'row', s:2} : null;
+    if (orange) {
+      if (st) { st.orangeD = true; }
+      else { st = {type:'cell', col:'D', s:4, orangeD:true}; }
+    }
+    push([r.date,r.time,r.device,r.nrRej,r.przebieg,r.kierowca,r.ilosc], st);
+    prevDate = r.date;
+  });
+  return {rows:rows, styles:styles};
+}
+
+// ── LOAD ROWS (after file read) ──────────────────────────────────────────────
+function loadRows(rows, fname, slot) {
+  var isMod = (slot==='m'||slot==='zm');
+  var isZ   = (slot==='zs'||slot==='zm');
+
+  var data = isMod ? parseTransAkt(rows) : parseDispenses(rows);
+  if (!data) data = (isMod ? parseDispenses(rows) : parseTransAkt(rows)); // fallback
+
+  if (!data) {
+    setErr(isZ?(slot==='zs'?'z':'z'):slot, 'Nie rozpoznano formatu pliku.');
+    return;
+  }
+
+  // add index to each row
+  data.forEach(function(r,i){ r._i=i; });
+
+  if (isZ) {
+    // zbiorczy slot
+    state[slot] = data;
+    el('drop-'+slot).classList.add('loaded');
+    el('dlabel-'+slot).textContent = fname;
+    // if both loaded, show picker
+    if (state.zs && state.zm) setupZPicker();
+    return;
+  }
+
+  state[slot] = data;
+  el('drop-'+slot).classList.add('loaded');
+  el('dlabel-'+slot).textContent = fname;
+  clearErr(slot);
+
+  var ds = dupeSet(data);
+  var dg = dupeGroups(data);
+  var vehicles = new Set(data.map(function(r){return r.nrRej;})).size;
+  var dc = dg.length;
+
+  // stats
+  var regsNote = activeRegs===null
+    ? '<div style="grid-column:1/-1;font-size:11px;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:5px 8px;margin-top:4px">⚠ Lista rejestracji niedostępna — podświetlanie pomarańczowe wyłączone.</div>'
+    : '';
+  el('stats-'+slot).innerHTML =
+    '<div class="stat"><div class="slabel2">Tankowań</div><div class="sval">'+data.length+'</div></div>'+
+    '<div class="stat"><div class="slabel2">Pojazdów</div><div class="sval">'+vehicles+'</div></div>'+
+    '<div class="stat'+(dc?'gbg':'')+'"><div class="slabel2">Duplikaty</div><div class="sval'+(dc?' g':'')+'">'+dc+'</div></div>'+
+    regsNote;
+  show('stats-'+slot);
+
+  // dupes info
+  if (dc) {
+    var h='<div class="ibox"><div class="ititle">Pojazdy tankowane więcej niż raz — zaznaczone na zielono w pliku</div>'
+      +'<table class="dt"><tr><th>Nr rej.</th><th>Data</th><th>Tankowania</th></tr>';
+    dg.forEach(function(d){
+      h+='<tr><td><b>'+d.nrRej+'</b></td><td>'+d.date+'</td><td>'
+        +d.items.map(function(i){return '<span style="display:block">'+i+'</span>';}).join('')+'</td></tr>';
+    });
+    h+='</table></div>';
+    el('dupes-'+slot).innerHTML=h; show('dupes-'+slot);
+  }
+
+  // day picker
+  var dates = uniqueDates(data);
+  var checksEl = el('checks-'+slot);
+  checksEl.innerHTML='';
+  dates.forEach(function(d){
+    var lbl=document.createElement('label'); lbl.className='chk';
+    var cb=document.createElement('input'); cb.type='checkbox'; cb.value=d; cb.checked=true;
+    lbl.appendChild(cb); lbl.appendChild(document.createTextNode(' '+d));
+    checksEl.appendChild(lbl);
+  });
+  show('picker-'+slot);
+  el('blabel-'+slot).textContent='Generuj i pobierz';
+  show('btn-'+slot);
+}
+
+// ── ORANGE SET (unrecognized registrations) ───────────────────────────────────
+function buildOrangeSet(data, useClean) {
+  if (!activeRegs) return null;
+  var set = {};
+  data.forEach(function(r, i) {
+    var nr = String(useClean ? (r.nrRejClean || r.nrRej) : r.nrRej || '').trim().toUpperCase();
+    if (nr && !activeRegs.has(nr)) set[i] = true;
+  });
+  return set;
+}
+
+// ── GENERATE SINGLE ──────────────────────────────────────────────────────────
+function generate(slot) {
+  if (slot==='z') { generateZ(); return; }
+  var data = state[slot];
+  if (!data) return;
+  var prefix = slot==='s'?'system-A':'system-B';
+
+  var selected=[];
+  el('checks-'+slot).querySelectorAll('input:checked').forEach(function(cb){selected.push(cb.value);});
+  if (!selected.length) { setErr(slot,'Zaznacz co najmniej jeden dzień.'); return; }
+
+  el('blabel-'+slot).textContent='Generowanie...';
+  el('btn-'+slot).disabled=true;
+
+  var pending=selected.length;
+  selected.forEach(function(date,di){
+    (function(d,i){
+      var dayData = data.filter(function(r){return r.date===d;});
+      // re-index for this day
+      dayData.forEach(function(r,j){r._di=j;});
+      var ds = dupeSet(dayData);
+      var rs = redSet(dayData);
+      var os = buildOrangeSet(dayData, slot !== 's');
+      var sheet = buildSheet(dayData, ds, rs, os);
+      buildXlsx(sheet.rows, sheet.styles, 'Dane', function(err,blob){
+        if (err){ setErr(slot,'Błąd: '+err.message); return; }
+        setTimeout(function(){ dlBlob(blob, prefix+' '+d+'.xlsx'); }, i*400);
+        pending--;
+        if (pending===0) setTimeout(function(){ resetSlot(slot); }, selected.length*400+800);
+      });
+    })(date,di);
+  });
+}
+
+function resetSlot(slot) {
+  ['err','stats','dupes','picker'].forEach(function(id){ hide(id+'-'+slot); });
+  hide('btn-'+slot);
+  el('drop-'+slot).classList.remove('loaded');
+  el('dlabel-'+slot).textContent='Przeciągnij plik lub kliknij tutaj';
+  el('fi-'+slot).value='';
+  state[slot]=null;
+}
+
+// ── ZBIORCZY ─────────────────────────────────────────────────────────────────
+function setupZPicker() {
+  var allDates={};
+  state.zs.forEach(function(r){allDates[r.date]=true;});
+  state.zm.forEach(function(r){allDates[r.date]=true;});
+  var dates=Object.keys(allDates).sort();
+  var checksEl=el('checks-z');
+  checksEl.innerHTML='';
+  dates.forEach(function(d){
+    var lbl=document.createElement('label'); lbl.className='chk';
+    var cb=document.createElement('input'); cb.type='checkbox'; cb.value=d; cb.checked=true;
+    lbl.appendChild(cb); lbl.appendChild(document.createTextNode(' '+d));
+    checksEl.appendChild(lbl);
+  });
+  show('picker-z');
+  el('blabel-z').textContent='Generuj plik zbiorczy';
+  show('btn-z');
+}
+
+function generateZ() {
+  var selected=[];
+  el('checks-z').querySelectorAll('input:checked').forEach(function(cb){selected.push(cb.value);});
+  if (!selected.length){ setErr('z','Zaznacz co najmniej jeden dzień.'); return; }
+
+  el('blabel-z').textContent='Generowanie...';
+  el('btn-z').disabled=true;
+
+  var pending=selected.length;
+  selected.forEach(function(date,di){
+    (function(d,i){
+      setTimeout(function(){
+        buildZDay(d, function(err,blob){
+          if(err){ setErr('z','Błąd: '+err.message); return; }
+          dlBlob(blob,'zbiorczy '+d+'.xlsx');
+          pending--;
+          if(pending===0) setTimeout(function(){ resetZ(); }, 800);
+        });
+      }, i*400);
+    })(date,di);
+  });
+}
+
+function buildZDay(date, cb) {
+  var sAll = state.zs.filter(function(r){return r.date===date;});
+  var mAll = state.zm.filter(function(r){return r.date===date;})
+    .map(function(r,i){return Object.assign({},r,{device:'6',_i:i});});
+
+  // re-index
+  sAll.forEach(function(r,i){r._i=i;});
+
+  var sDS = dupeSet(sAll), sRS = redSet(sAll);
+  var mDS = dupeSet(mAll), mRS = redSet(mAll);
+  var sOS = buildOrangeSet(sAll, false);
+  var mOS = buildOrangeSet(mAll, true);
+
+  // sec3: system-B deduplicated, without product in nrRej
+  var mDedup = dedupFuel(mAll);
+  mDedup.forEach(function(r,i){r._i3=i;});
+  var mClean = mDedup.map(function(r){return Object.assign({},r,{nrRej:r.nrRejClean||r.nrRej});});
+
+  // firma lookup
+  var firmMap={};
+  sAll.forEach(function(r){ var k=r.nrRej; if(!firmMap[k])firmMap[k]=[]; firmMap[k].push(r); });
+
+  // track which sAll rows are copied to sec3 (will be green in sec1)
+  var s1green={};
+
+  // build rows + styles arrays
+  var rows=[], sts=[];
+  function push(row,st){ rows.push(row); sts.push(st); }
+  function pushEmpty(){ push(['','','','','','',''],null); }
+
+  function secHeader(label){ push([label,'','','','','',''],{type:'row',s:1}); }
+  function colHeader(){ push(HEADER.slice(),{type:'row',s:1}); }
+
+  function secData(data, ds, rs, os) {
+    var srt=sorted(data), prev=null;
+    srt.forEach(function(r){
+      if(prev&&r.date!==prev) pushEmpty();
+      var oi=r._i;
+      var green=ds&&ds[oi];
+      var red=rs&&rs[oi];
+      var orange=os&&os[oi];
+      var st=red?{type:'both',rowS:green?2:null,redE:true}:green?{type:'row',s:2}:null;
+      if(orange){ if(st) st.orangeD=true; else st={type:'cell',col:'D',s:4,orangeD:true}; }
+      push([r.date,r.time,r.device,r.nrRej,r.przebieg,r.kierowca,r.ilosc],st);
+      prev=r.date;
+    });
+  }
+
+  // SEC1: FIRMA (green = rows that will be copied to sec3 - determined after sec3 is built)
+  // We need to build sec3 first to know which sAll rows are copied
+  // So build sec3 data first, then go back and mark sec1
+
+  // Build sec3 rows
+  var s3rows=[], s3sts=[];
+  function s3push(row,st){ s3rows.push(row); s3sts.push(st); }
+
+  // Build sec3: for each Orlen row, find its firma companion and sort together by time
+  // Group Orlen rows by (nrRejClean, date)
+  var srtM=sorted(mClean);
+  // collect all sec3 entries as {row, style, sortKey}
+  var s3entries=[];
+  var usedFirm={}; // track which firm rows already assigned
+
+  srtM.forEach(function(r){
+    var oi=r._i;
+    var red=mRS&&mRS[oi];
+    var orange=mOS&&mOS[oi];
+    var s3st=red?{type:'cell',col:'E',s:3}:null;
+    if(orange){ if(s3st) s3st.orangeD=true; else s3st={type:'cell',col:'D',s:4,orangeD:true}; }
+    s3entries.push({row:[r.date,r.time,r.device,r.nrRej,r.przebieg,r.kierowca,r.ilosc],
+      st:s3st, date:r.date, time:r.time, isOrlen:true});
+
+    var nrKey=r.nrRejClean||r.nrRej, nextT=null;
+    srtM.forEach(function(or){
+      if((or.nrRejClean||or.nrRej)===nrKey&&or.date===r.date&&or.time>r.time)
+        if(nextT===null||or.time<nextT) nextT=or.time;
+    });
+    var fRows=(firmMap[nrKey]||[]).filter(function(fr){
+      if(usedFirm[fr._i]) return false;
+      if(fr.time<=r.time) return false;
+      if(String(fr.przebieg)===String(r.przebieg)&&fr.przebieg!=='') return false;
+      if(nextT&&fr.time>=nextT) return false;
+      return true;
+    });
+    fRows.sort(function(a,b){return a.time<b.time?-1:1;});
+    fRows.forEach(function(fr){
+      usedFirm[fr._i]=true;
+      s1green[fr._i]=true;
+      s3entries.push({row:[fr.date,fr.time,fr.device,fr.nrRej,fr.przebieg,fr.kierowca,fr.ilosc],
+        st:{type:'row',s:2}, date:fr.date, time:fr.time, isOrlen:false});
+    });
+  });
+
+  // group by (date, nrRej), sort groups by first appearance, within group sort by time
+  var groupOrder=[], groupMap={};
+  s3entries.forEach(function(e){
+    var key=e.date+'|'+(e.row[3]); // date + nrRej (already clean)
+    if(!groupMap[key]){ groupMap[key]=[]; groupOrder.push(key); }
+    groupMap[key].push(e);
+  });
+  // sort within each group: Orlen rows first by time, then firma rows by time
+  groupOrder.forEach(function(key){
+    var orlen=groupMap[key].filter(function(e){return e.isOrlen;});
+    var firma=groupMap[key].filter(function(e){return !e.isOrlen;});
+    orlen.sort(function(a,b){return a.time<b.time?-1:a.time>b.time?1:0;});
+    firma.sort(function(a,b){return a.time<b.time?-1:a.time>b.time?1:0;});
+    // firma at end, no separator
+    groupMap[key]=orlen.concat(firma);
+  });
+  // sort groups by date then earliest time in group
+  groupOrder.sort(function(a,b){
+    var ga=groupMap[a], gb=groupMap[b];
+    if(ga[0].date!==gb[0].date) return ga[0].date<gb[0].date?-1:1;
+    return ga[0].time<gb[0].time?-1:ga[0].time>gb[0].time?1:0;
+  });
+
+  // push to s3rows: all Orlen rows first (grouped by car, separated by empty row),
+  // then all firma rows at the end (no separators between them)
+  var prevDate3=null, prevNr3=null;
+  var firmaRows=[];
+  groupOrder.forEach(function(key){
+    var entries=groupMap[key];
+    var orlenEntries=entries.filter(function(e){return e.isOrlen;});
+    var firmaEntries=entries.filter(function(e){return !e.isOrlen;});
+    if(orlenEntries.length){
+      orlenEntries.forEach(function(e){ s3push(e.row,e.st); });
+    }
+    firmaEntries.forEach(function(e){ firmaRows.push(e); });
+  });
+  // append all firma rows at the end
+  if(firmaRows.length){
+    s3push(['','','','','','',''],null); // one empty separator before firma block
+    firmaRows.forEach(function(e){ s3push(e.row,e.st); });
+  }
+
+  // Now build full sheet
+  // SEC1: exclude rows copied to sec3
+  secHeader('FIRMA'); colHeader();
+  var srtS=sorted(sAll), prevS=null;
+  srtS.forEach(function(r){
+    var oi=r._i;
+    if(s1green[oi]) return; // copied to sec3 - skip from sec1
+    if(prevS&&r.date!==prevS) pushEmpty();
+    var red=sRS&&sRS[oi];
+    var orange=sOS&&sOS[oi];
+    var st=red?{type:'cell',col:'E',s:3}:null;
+    if(orange){ if(st) st.orangeD=true; else st={type:'cell',col:'D',s:4,orangeD:true}; }
+    push([r.date,r.time,r.device,r.nrRej,r.przebieg,r.kierowca,r.ilosc],st);
+    prevS=r.date;
+  });
+  pushEmpty(); pushEmpty();
+
+  // SEC2: ORLEN
+  secHeader('ORLEN'); colHeader();
+  secData(mAll, mDS, mRS, mOS);
+  pushEmpty(); pushEmpty();
+
+  // SEC3: ZBIORCZY
+  secHeader('ZBIORCZY'); colHeader();
+  s3rows.forEach(function(r,i){ rows.push(r); sts.push(s3sts[i]); });
+
+  // Build xlsx with custom style application
+  var ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=COLW;
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Zbiorczy');
+  var bin=XLSX.write(wb,{bookType:'xlsx',type:'binary'});
+
+  JSZip.loadAsync(bin2arr(bin)).then(function(zip){
+    zip.file('xl/styles.xml',STYLES);
+    return zip.file('xl/worksheets/sheet1.xml').async('string').then(function(xml){
+    sts.forEach(function(st,i){
+      if(!st) return;
+      var rn=i+1;
+      var rowRe=new RegExp('(<row r="'+rn+'"[^>]*>)([\\s\\S]*?)(<\/row>)');
+      xml=xml.replace(rowRe,function(_,o,cells,c){
+        // apply row style
+        var rowS=st.type==='row'?st.s:st.type==='both'?st.rowS:null;
+        if(rowS) {
+          cells=cells.replace(new RegExp('<c r="([A-Z]+)'+rn+'"([^>]*?)(\\s*\\/?>)','g'),
+            function(_2,col,attrs,end){return '<c r="'+col+rn+'"'+attrs.replace(/\s*s="\d+"/,'')+' s="'+rowS+'"'+end;});
+        }
+        // apply cell-level red on col E
+        if(st.type==='cell'||st.type==='both'){
+          cells=cells.replace(new RegExp('<c r="(E)'+rn+'"([^>]*?)(\\s*\\/?>)'),
+            function(_2,col,attrs,end){return '<c r="E'+rn+'"'+attrs.replace(/\s*s="\d+"/,'')+' s="3"'+end;});
+        }
+        if(st.orangeD){
+          cells=cells.replace(new RegExp('<c r="(D)'+rn+'"([^>]*?)(\\s*\\/?>)'),
+            function(_2,col,attrs,end){return '<c r="D'+rn+'"'+attrs.replace(/\s*s="\d+"/,'')+' s="4"'+end;});
+        }
+        return o+cells+c;
+      });
+    });
+      zip.file('xl/worksheets/sheet1.xml',xml);
+      return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
+    });
+  }).then(function(out){
+    cb(null,new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+  }).catch(cb);
+}
+
+function resetZ() {
+  ['zs','zm'].forEach(function(slot){
+    el('drop-'+slot).classList.remove('loaded');
+    el('dlabel-'+slot).textContent='Kliknij lub przeciągnij';
+    el('fi-'+slot).value='';
+    state[slot]=null;
+  });
+  hide('err-z'); hide('picker-z'); hide('btn-z');
+  el('blabel-z').textContent='Wczytaj oba pliki';
+  el('btn-z').disabled=false;
+}
+
+// fix drop handler for pane-s
+document.getElementById('drop-s').setAttribute('ondragover','event.preventDefault();this.classList.add(\'over\')');
+
+// ── REJESTRACJE UI ────────────────────────────────────────────────────────────
+var regData = []; // [numer, ...]
+
+function regSetStatus(msg, type) {
+  var bar = el('reg-status-bar');
+  bar.textContent = msg;
+  bar.className = 'reg-status ' + (type||'info');
+}
+
+function regRowId(numer) {
+  return 'reg-row-' + numer.replace(/[^a-zA-Z0-9]/g,'_');
+}
+
+function regRender() {
+  var list = el('reg-list');
+  if (!regData.length) { list.innerHTML='<div class="reg-empty">Brak wpisów — dodaj pierwszy numer rejestracyjny.</div>'; return; }
+  list.innerHTML = regData.map(function(numer){
+    var rid = regRowId(numer);
+    return '<div class="reg-item" id="'+rid+'">'
+      +'<span class="reg-nr">'+numer+'</span>'
+      +'<button class="reg-btn edit" onclick="regStartEdit(\''+numer.replace(/'/g,"\\'")+'\')" >Edytuj</button>'
+      +'<button class="reg-btn del" onclick="regDelete(\''+numer.replace(/'/g,"\\'")+'\')">Usuń</button>'
+      +'</div>';
+  }).join('');
+}
+
+function regStartEdit(numer) {
+  var rid = regRowId(numer);
+  var eid = rid+'_input';
+  var row = el(rid);
+  row.innerHTML = '<input class="reg-edit-input" id="'+eid+'" value="'+numer.replace(/"/g,'&quot;')+'" />'
+    +'<button class="reg-btn save" onclick="regSave(\''+numer.replace(/'/g,"\\'")+'\',\''+eid+'\')">Zapisz</button>'
+    +'<button class="reg-btn cancel" onclick="regRender()">Anuluj</button>';
+  el(eid).focus();
+  el(eid).addEventListener('keydown', function(e){ if(e.key==='Enter') regSave(numer, eid); });
+}
+
+async function regSave(oldNumer, eid) {
+  var input = el(eid);
+  var val = input ? input.value.trim().toUpperCase() : '';
+  if (!val) return;
+  regSetStatus('Zapisywanie…','info');
+  try {
+    var idx = regData.indexOf(oldNumer);
+    if (idx !== -1) regData[idx] = val;
+    regData.sort(function(a,b){return a<b?-1:1;});
+    activeRegs = new Set(regData.map(function(n){return n.toUpperCase();}));
+    magazyn.zapisz(regData);
+    regRender();
+    regSetStatus('Zapisano.','ok');
+  } catch(e) { regSetStatus('Błąd: '+e.message,'err'); }
+}
+
+async function regAdd() {
+  var input = el('reg-new-nr');
+  var val = input.value.trim().toUpperCase();
+  if (!val) return;
+  regSetStatus('Dodawanie…','info');
+  try {
+    if (regData.indexOf(val) !== -1) { regSetStatus('Ten numer już jest na liście.','err'); return; }
+    regData.push(val);
+    regData.sort(function(a,b){return a<b?-1:1;});
+    activeRegs = new Set(regData.map(function(n){return n.toUpperCase();}));
+    magazyn.zapisz(regData);
+    input.value='';
+    regRender();
+    regSetStatus('Dodano: '+val,'ok');
+  } catch(e) { regSetStatus('Błąd: '+e.message,'err'); }
+}
+
+async function regDelete(numer) {
+  if (!confirm('Usunąć numer ' + numer + '?')) return;
+  regSetStatus('Usuwanie…','info');
+  try {
+    regData = regData.filter(function(n){return n !== numer;});
+    activeRegs = new Set(regData.map(function(n){return n.toUpperCase();}));
+    magazyn.zapisz(regData);
+    regRender();
+    regSetStatus('Usunięto.','ok');
+  } catch(e) { regSetStatus('Błąd: '+e.message,'err'); }
+}
+
+async function initRegs() {
+  try {
+    var data = await loadRegs();
+    regData = data.map(function(r){ return String(r.numer||'').trim().toUpperCase(); });
+    regRender();
+    regSetStatus('Załadowano '+regData.length+' rejestracji (lista zapisana w tej przeglądarce).','ok');
+  } catch(e) {
+    activeRegs = null;
+    regSetStatus('Błąd: '+(e.message||JSON.stringify(e)),'err');
+    el('reg-list').innerHTML='<div class="reg-empty">Nie można załadować listy.</div>';
+    show('reg-warn');
+  }
+}
+
+initRegs();
+</script>
+</body>
+</html>
