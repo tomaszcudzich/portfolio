@@ -16,7 +16,8 @@ zawodników, skanach paszportów psów. Repozytoria zostają prywatne i to jest
 świadoma decyzja, nie brak dorobku.
 
 To repozytorium rozwiązuje problem inaczej: pokazuję **kod, który wolno pokazać**,
-a resztę opisuję.
+a resztę opisuję. Oba dema wdrażają się z tego repozytorium automatycznie — to,
+co widzisz pod linkiem, jest tym, co widzisz w kodzie obok.
 
 | | Co to jest | Kod | Otwórz w przeglądarce |
 |---|---|---|---|
